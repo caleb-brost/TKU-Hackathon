@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { APIProvider } from "@vis.gl/react-google-maps";
 import TicketCard from "@/components/TicketCard";
 import RouteForm from "@/components/RouteForm";
 import { Ticket, GenerateRouteInput } from "@/lib/schemas";
@@ -65,7 +66,10 @@ export default function HomePage() {
     selected: selected.has(t.id),
   }));
 
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
   return (
+    <APIProvider apiKey={apiKey}>
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -111,5 +115,6 @@ export default function HomePage() {
         />
       </div>
     </main>
+    </APIProvider>
   );
 }

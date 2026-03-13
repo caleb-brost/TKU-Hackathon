@@ -6,7 +6,6 @@
  */
 
 import {
-  APIProvider,
   Map,
   AdvancedMarker,
   Pin,
@@ -40,8 +39,6 @@ export default function MapWidget({
   zoom = 13,
   onMarkerClick,
 }: MapWidgetProps) {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
-
   const defaultCenter =
     center ??
     (markers.length > 0
@@ -49,28 +46,26 @@ export default function MapWidget({
       : { lat: 53.5461, lng: -113.4938 }); // Default: Edmonton, Alberta
 
   return (
-    <APIProvider apiKey={apiKey}>
-      <Map
-        style={{ width: "100%", height: "100%" }}
-        defaultCenter={defaultCenter}
-        defaultZoom={zoom}
-        mapId="road-damage-map"
-        disableDefaultUI={false}
-      >
-        {markers.map((m) => (
-          <AdvancedMarker
-            key={m.id}
-            position={{ lat: m.lat, lng: m.lng }}
-            onClick={() => onMarkerClick?.(m.id)}
-          >
-            <Pin
-              background={m.selected ? "#3b82f6" : (SEVERITY_COLOR[m.severity ?? "low"] ?? "#6b7280")}
-              borderColor={m.selected ? "#1d4ed8" : "#fff"}
-              glyphColor="#fff"
-            />
-          </AdvancedMarker>
-        ))}
-      </Map>
-    </APIProvider>
+    <Map
+      style={{ width: "100%", height: "100%" }}
+      defaultCenter={defaultCenter}
+      defaultZoom={zoom}
+      mapId="road-damage-map"
+      disableDefaultUI={false}
+    >
+      {markers.map((m) => (
+        <AdvancedMarker
+          key={m.id}
+          position={{ lat: m.lat, lng: m.lng }}
+          onClick={() => onMarkerClick?.(m.id)}
+        >
+          <Pin
+            background={m.selected ? "#3b82f6" : (SEVERITY_COLOR[m.severity ?? "low"] ?? "#6b7280")}
+            borderColor={m.selected ? "#1d4ed8" : "#fff"}
+            glyphColor="#fff"
+          />
+        </AdvancedMarker>
+      ))}
+    </Map>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GenerateRouteInput } from "@/lib/schemas";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 interface RouteFormProps {
   selectedCount: number;
@@ -44,20 +45,18 @@ export default function RouteForm({
         {selectedCount} ticket{selectedCount !== 1 ? "s" : ""} selected
       </p>
 
-      <input
-        type="text"
+      <AddressAutocomplete
         placeholder="Start address"
         value={startAddress}
-        onChange={(e) => setStartAddress(e.target.value)}
+        onChange={setStartAddress}
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         required
       />
 
-      <input
-        type="text"
+      <AddressAutocomplete
         placeholder="End address"
         value={endAddress}
-        onChange={(e) => setEndAddress(e.target.value)}
+        onChange={setEndAddress}
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         required
       />
