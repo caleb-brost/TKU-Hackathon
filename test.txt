@@ -1,0 +1,81 @@
+Folder structure
+
+  web/
+  ├── app/
+  │   ├── layout.tsx                        # Root layout + metadata
+  │   ├── globals.css                       # Tailwind base
+  │   ├── page.tsx                          # Main page (map + cards + route form)
+  │   ├── tickets/[id]/page.tsx            # Ticket detail + completion form
+  │   └── api/
+  │       ├── tickets/route.ts             # GET /api/tickets
+  │       ├── tickets/[id]/route.ts        # GET /api/tickets/[id]
+  │       ├── tickets/[id]/complete/route.ts # PATCH /api/tickets/[id]/complete
+  │       └── routes/generate/route.ts    # POST /api/routes/generate
+  ├── components/
+  │   ├── MapWidget.tsx                    # Google Maps (reused on both pages)
+  │   ├── TicketCard.tsx                   # Card with select checkbox + navigate
+  │   └── RouteForm.tsx                    # Address inputs + generate button
+  ├── lib/
+  │   ├── schemas.ts                       # All Zod schemas + derived types
+  │   ├── supabase.ts                      # Browser + server Supabase clients
+  │   └── api.ts                           # ok() / err() response helpers
+  ├── services/
+  │   ├── ticketService.ts                 # All DB access for Ticket
+  │   └── routingService.ts               # Pluggable route generation
+  └── supabase/
+      ├── schema.sql                       # Create tables
+      └── seed.sql                         # Sample tickets (Taipei)
+
+  ---
+  Setup instructions
+
+  1. Install
+
+  cd web
+  npm install
+
+  2. Create .env.local
+
+  cp .env.local.example .env.local
+  # Fill in your Supabase URL, anon key, service role key, and Google Maps key
+
+  3. Set up Supabase
+
+  - Run supabase/schema.sql in your Supabase SQL Editor
+  - Optionally run supabase/seed.sql to get 6 sample tickets
+  - In Supabase → Storage → create a bucket named completion-images, set it to public
+
+  4. Google Maps API key
+
+  - Enable Maps JavaScript API and Directions API in Google Cloud Console
+  - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is used by the map widget in the browser
+  - Add GOOGLE_MAPS_SERVER_API_KEY (can be the same key) for server-side route generation
+  - Without a key the route form still works — it generates a Google Maps deeplink stub
+
+  5. Run
+
+  npm run dev
+
+  ---
+  Why the architecture is compact but expandable
+
+  ┌────────────────────────────┬─────────────────────────────────────────────────────┬───────────────────────────────────────────────────────────────┐
+  │           Layer            │                        Role                         │                          Swap point                           │
+  ├────────────────────────────┼─────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ lib/schemas.ts             │ Single source of truth for all types                │ Add fields in one place; Zod validates at every boundary      │
+  ├────────────────────────────┼─────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ lib/supabase.ts            │ Two clients: browser (anon) / server (service role) │ Replace with any DB client without touching business logic    │
+  ├────────────────────────────┼─────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ services/ticketService.ts  │ All DB queries for tickets                          │ AI model predictions can insert directly into tickets here    │
+  ├────────────────────────────┼─────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ services/routingService.ts │ Route generation behind an interface                │ Swap Google Maps for OpenRouteService or a custom optimizer   │
+  ├────────────────────────────┼─────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ lib/api.ts                 │ ok() / err() helpers                                │ Consistent JSON shape across all routes — easy to add logging │
+  ├────────────────────────────┼─────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ app/api/*                  │ Thin route handlers                                 │ Only validate + call services; no business logic leaks in     │
+  ├────────────────────────────┼─────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────┤
+  │ Components                 │ MapWidget reused on both pages                      │ Pass different marker sets; no duplication                    │
+  └────────────────────────────┴─────────────────────────────────────────────────────┴───────────────────────────────────────────────────────────────┘
+
+  The key principle: each layer has one job. Adding AI-generated tickets means touching only ticketService.ts (or a new aiIngestionService.ts). Swapping routing providers means touching
+  only routingService.ts. Neither change touches UI or API routes.
