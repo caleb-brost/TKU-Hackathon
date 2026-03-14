@@ -160,14 +160,16 @@ function HomeContent() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-xl font-bold text-gray-900">Road Damage Tickets</h1>
-        <p className="text-sm text-gray-500">Select tickets to plan a repair route</p>
+      <header className="bg-white border-b border-gray-200 px-6 h-16 flex items-center">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">Road Damage Tickets</h1>
+          <p className="text-xs text-gray-500">Select tickets to plan a repair route</p>
+        </div>
       </header>
 
       <div className="max-w-7xl mx-auto p-4 space-y-4">
         {/* Map + Route Planner row */}
-        <div className="flex gap-4 h-96">
+        <div className={`flex h-96 ${plannerOpen ? "gap-4" : ""}`}>
           {/* Map */}
           <div className="relative flex-1 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
             <MapWidget markers={markers} onMarkerClick={toggleSelect} directionsResult={directionsResult} />

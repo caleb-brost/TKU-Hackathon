@@ -40,16 +40,6 @@ export default function TicketDetailPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const leftColRef = useRef<HTMLDivElement>(null);
-  const [leftColHeight, setLeftColHeight] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!leftColRef.current) return;
-    const observer = new ResizeObserver(([entry]) => {
-      setLeftColHeight(entry.contentRect.height);
-    });
-    observer.observe(leftColRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   // ── Fetch ticket ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -136,19 +126,20 @@ export default function TicketDetailPage() {
     <APIProvider apiKey={apiKey}>
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-3">
-        <button onClick={() => router.push("/")} className="text-blue-600 text-sm hover:underline">
+      <header className="bg-white border-b border-gray-200 px-6 h-16 flex items-center gap-3">
+        <button onClick={() => router.push("/")} className="text-blue-600 text-sm hover:underline shrink-0">
           ← Back
         </button>
-        <h1 className="text-lg font-bold text-gray-900 capitalize">
-          {ticket.type} – Ticket Detail
-        </h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 capitalize leading-tight">{ticket.type} – Ticket Detail</h1>
+          <p className="text-xs text-gray-500">View and manage this ticket</p>
+        </div>
       </header>
 
       <div className="max-w-7xl mx-auto p-4 space-y-4">
 
         {/* Map */}
-        <div className="flex gap-4 h-96 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+        <div className="h-96 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
           <MapWidget
             markers={[{ lat: ticket.latitude, lng: ticket.longitude, id: ticket.id, severity: ticket.severity }]}
             center={{ lat: ticket.latitude, lng: ticket.longitude }}
@@ -157,12 +148,12 @@ export default function TicketDetailPage() {
         </div>
 
         {/* Bottom row: left column (info + completion) | right (image) */}
-        <div className="flex gap-4 items-stretch">
+        <div className="flex gap-4 h-[600px]">
 
           {/* Left column: info widget + completion form/status */}
-          <div ref={leftColRef} className="w-96 shrink-0 flex flex-col gap-4">
+          <div ref={leftColRef} className="w-96 shrink-0 flex flex-col gap-4 h-full">
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-2 shrink-0 overflow-y-auto">
               <h2 className="font-semibold text-gray-800">Ticket Information</h2>
               <InfoRow label="ID" value={ticket.id} mono />
               <InfoRow label="Type" value={ticket.type} capitalize />
@@ -186,51 +177,50 @@ export default function TicketDetailPage() {
               )}
             </div>
 
-            {/* Completion form (new tickets only) */}
-            {!isAlreadyComplete && (
-              submitSuccess ? (
-                <div className="rounded-xl bg-green-50 border border-green-200 p-4 text-center">
-                  <p className="text-green-700 font-medium">Ticket marked as completed!</p>
-                  <button onClick={() => router.push("/")} className="mt-2 text-sm text-blue-600 underline">Back to map</button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-                  <h2 className="font-semibold text-gray-800">Complete Ticket</h2>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} className="h-4 w-4 accent-blue-600" />
-                    <span className="text-sm text-gray-700">Mark as completed</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Employee ID"
-                    value={employeeId}
-                    onChange={(e) => setEmployeeId(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
+            {/* Completion widget */}
+            {submitSuccess ? (
+              <div className="flex-1 rounded-xl bg-green-50 border border-green-200 shadow-sm p-4 flex flex-col items-center justify-center text-center">
+                <p className="text-green-700 font-medium">Ticket marked as completed!</p>
+                <button onClick={() => router.push("/")} className="mt-2 text-sm text-blue-600 underline">Back to map</button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex-1 flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm p-4 gap-3">
+                <h2 className="font-semibold text-gray-800">Complete Ticket</h2>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={isAlreadyComplete || completed} disabled={isAlreadyComplete} onChange={(e) => setCompleted(e.target.checked)} className="h-4 w-4 accent-blue-600 disabled:cursor-not-allowed" />
+                  <span className="text-sm text-gray-700">Mark as completed</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Employee ID"
+                  value={isAlreadyComplete ? (ticket.employee_id ?? "") : employeeId}
+                  disabled={isAlreadyComplete}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                />
+                {!isAlreadyComplete && (
                   <div>
                     <label className="block text-sm text-gray-600 mb-1">Upload completion photo</label>
                     <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} className="text-sm text-gray-600" />
                     {imageFile && <p className="text-xs text-gray-400 mt-1">{imageFile.name}</p>}
                   </div>
-                  {submitError && <p className="text-sm text-red-600">{submitError}</p>}
-                  <button type="submit" disabled={submitting} className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
-                    {submitting ? "Submitting…" : "Submit Completion"}
-                  </button>
-                </form>
-              )
+                )}
+                {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+                <button type="submit" disabled={isAlreadyComplete || submitting} className="mt-auto w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  {submitting ? "Submitting…" : isAlreadyComplete ? "Completed" : "Submit Completion"}
+                </button>
+              </form>
             )}
 
           </div>
 
-          {/* Right: image viewer — height locked to left column */}
-          <div className="flex-1 h-[565px]" style={leftColHeight ? { height: leftColHeight } : undefined}>
+          {/* Right: image viewer */}
+          <div className="flex-1 h-full">
             {isAlreadyComplete ? (
-              <div className="h-full flex flex-col">
-                <ImageViewer
-                  beforeUrl={ticket.image_url ? getImageUrl(ticket.image_url) : null}
-                  afterUrl={ticket.completion_image_url ?? null}
-                />
-              </div>
+              <ImageViewer
+                beforeUrl={ticket.image_url ? getImageUrl(ticket.image_url) : null}
+                afterUrl={ticket.completion_image_url ?? null}
+              />
             ) : (
               <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                 <div className="flex border-b border-gray-200">
@@ -277,7 +267,7 @@ function ImageViewer({ beforeUrl, afterUrl }: { beforeUrl: string | null; afterU
   }
 
   return (
-    <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+    <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
       {/* Tab bar */}
       <div className="flex border-b border-gray-200">
         {tabs.map((tab) => (
