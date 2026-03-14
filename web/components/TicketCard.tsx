@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { Ticket } from "@/lib/schemas";
+import { getImageUrl } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 interface TicketCardProps {
@@ -28,59 +30,63 @@ export default function TicketCard({
   const router = useRouter();
 
   return (
-    <div
-      className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
-        selected
-          ? "border-blue-500 bg-blue-50 shadow-md"
-          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+    <tr
+      className={`cursor-pointer transition-colors ${
+        selected ? "bg-blue-50" : "bg-white hover:bg-gray-50"
       }`}
       onClick={() => router.push(`/tickets/${ticket.id}`)}
     >
-      {/* Checkbox – stops propagation so clicking it doesn't navigate */}
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={(e) => {
-          e.stopPropagation();
-          onToggleSelect(ticket.id);
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className="absolute top-3 right-3 h-4 w-4 accent-blue-600"
-      />
-
-      <div className="flex items-center gap-2 mb-2">
-        <span className="font-semibold capitalize text-sm">{ticket.type}</span>
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_BADGE[ticket.severity]}`}
-        >
+      <td className="px-3 py-2 text-sm font-medium capitalize text-gray-900">
+        {ticket.type}
+      </td>
+      <td className="px-3 py-2">
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_BADGE[ticket.severity]}`}>
           {ticket.severity}
         </span>
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[ticket.status]}`}
-        >
+      </td>
+      <td className="px-3 py-2">
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[ticket.status]}`}>
           {ticket.status}
         </span>
-      </div>
-
-      {ticket.description && (
-        <p className="text-sm text-gray-600 mb-1 line-clamp-2">
-          {ticket.description}
-        </p>
-      )}
-
-      <p className="text-xs text-gray-400">
-        {ticket.latitude.toFixed(5)}, {ticket.longitude.toFixed(5)}
-      </p>
-
-      {ticket.confidence != null && (
-        <p className="text-xs text-gray-400">
-          Confidence: {(ticket.confidence * 100).toFixed(0)}%
-        </p>
-      )}
-
-      <p className="text-xs text-gray-400 mt-1">
+      </td>
+      <td className="px-3 py-2 text-sm text-gray-600 max-w-xs truncate">
+        {ticket.description ?? <span className="text-gray-300">—</span>}
+      </td>
+      <td className="px-3 py-2 text-xs text-gray-400 font-mono whitespace-nowrap">
+        {ticket.latitude.toFixed(4)}, {ticket.longitude.toFixed(4)}
+      </td>
+      <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">
+        {ticket.confidence != null ? `${(ticket.confidence * 100).toFixed(0)}%` : "—"}
+      </td>
+      <td className="px-3 py-2 text-xs text-gray-400 whitespace-nowrap">
         {new Date(ticket.created_at).toLocaleDateString()}
-      </p>
-    </div>
+      </td>
+      <td className="px-3 py-2">
+        {ticket.image_url ? (
+          <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 shrink-0">
+            <Image
+              src={getImageUrl(ticket.image_url)}
+              alt="Road issue"
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <span className="text-gray-300 text-xs">—</span>
+        )}
+      </td>
+      <td
+        className="px-3 py-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect(ticket.id)}
+          className="h-4 w-4 accent-blue-600 cursor-pointer"
+        />
+      </td>
+    </tr>
   );
 }

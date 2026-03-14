@@ -22,3 +22,18 @@ export const supabaseServer = createClient(url, serviceKey ?? anonKey, {
 /** Bucket used for completion proof images */
 export const COMPLETION_BUCKET =
   process.env.SUPABASE_STORAGE_BUCKET ?? "completion-images";
+
+/** Bucket used for road damage images captured by the model */
+export const IMAGE_BUCKET = "Images";
+
+/**
+ * Converts a storage path or existing full URL to a public URL.
+ * If the value already starts with "http" it is returned as-is.
+ */
+export function getImageUrl(pathOrUrl: string): string {
+  if (pathOrUrl.startsWith("http")) return pathOrUrl;
+  const { data } = supabaseBrowser.storage
+    .from(IMAGE_BUCKET)
+    .getPublicUrl(pathOrUrl);
+  return data.publicUrl;
+}

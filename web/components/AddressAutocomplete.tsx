@@ -20,6 +20,8 @@ export default function AddressAutocomplete({
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const places = useMapsLibrary("places");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     if (!places || !inputRef.current) return;
@@ -32,14 +34,14 @@ export default function AddressAutocomplete({
     const listener = autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
       if (place.formatted_address) {
-        onChange(place.formatted_address);
+        onChangeRef.current(place.formatted_address);
       }
     });
 
     return () => {
       google.maps.event.removeListener(listener);
     };
-  }, [places, onChange]);
+  }, [places]); // only re-run when the Places library loads
 
   return (
     <input

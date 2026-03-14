@@ -7,13 +7,11 @@ import AddressAutocomplete from "@/components/AddressAutocomplete";
 interface RouteFormProps {
   selectedCount: number;
   onGenerate: (input: GenerateRouteInput) => Promise<void>;
-  mapsUrl?: string;
 }
 
 export default function RouteForm({
   selectedCount,
   onGenerate,
-  mapsUrl,
 }: RouteFormProps) {
   const [startAddress, setStartAddress] = useState("");
   const [endAddress, setEndAddress] = useState("");
@@ -71,16 +69,6 @@ export default function RouteForm({
         {loading ? "Generating…" : "Generate Route"}
       </button>
 
-      {mapsUrl && (
-        <a
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-center text-sm text-blue-600 underline"
-        >
-          Open in Google Maps ↗
-        </a>
-      )}
     </form>
   );
 }

@@ -4,7 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { APIProvider } from "@vis.gl/react-google-maps";
 import { Ticket } from "@/lib/schemas";
+import { getImageUrl } from "@/lib/supabase";
 
 const MapWidget = dynamic(() => import("@/components/MapWidget"), {
   ssr: false,
@@ -117,7 +119,10 @@ export default function TicketDetailPage() {
 
   const isAlreadyComplete = ticket.status === "completed";
 
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
   return (
+    <APIProvider apiKey={apiKey}>
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-3">
@@ -148,7 +153,7 @@ export default function TicketDetailPage() {
         {ticket.image_url && (
           <div className="rounded-xl overflow-hidden border border-gray-200">
             <Image
-              src={ticket.image_url}
+              src={getImageUrl(ticket.image_url)}
               alt="Road issue"
               width={800}
               height={400}
@@ -276,6 +281,7 @@ export default function TicketDetailPage() {
         )}
       </div>
     </main>
+    </APIProvider>
   );
 }
 
