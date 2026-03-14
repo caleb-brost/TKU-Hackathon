@@ -256,7 +256,8 @@ function ImageViewer({ beforeUrl, afterUrl }: { beforeUrl: string | null; afterU
     return t;
   }, [beforeUrl, afterUrl]);
 
-  const [activeTab, setActiveTab] = useState(tabs[0] ?? "Before");
+  const defaultTab = tabs.includes("Compare") ? "Compare" : (tabs[0] ?? "Before");
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   if (tabs.length === 0) {
     return (
