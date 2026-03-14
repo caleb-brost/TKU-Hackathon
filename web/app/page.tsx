@@ -144,8 +144,15 @@ function HomeContent() {
 
       <div className="max-w-7xl mx-auto p-4 space-y-4">
         {/* Map */}
-        <div className="relative w-full h-80 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+        <div className="relative w-full h-96 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
           <MapWidget markers={markers} onMarkerClick={toggleSelect} directionsResult={directionsResult} />
+
+          {/* Route planner overlay — bottom-left */}
+          <div className="absolute bottom-3 left-3 z-10">
+            <RouteForm selectedCount={selected.size} onGenerate={handleGenerateRoute} />
+          </div>
+
+          {/* Clear route button — top-right */}
           {directionsResult && (
             <button
               onClick={() => setDirectionsResult(null)}
@@ -247,11 +254,6 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Route generation */}
-        <RouteForm
-          selectedCount={selected.size}
-          onGenerate={handleGenerateRoute}
-        />
       </div>
     </main>
   );

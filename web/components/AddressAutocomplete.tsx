@@ -26,9 +26,17 @@ export default function AddressAutocomplete({
   useEffect(() => {
     if (!places || !inputRef.current) return;
 
+    // Bias/restrict suggestions to the greater Edmonton area
+    const edmontonBounds = new google.maps.LatLngBounds(
+      { lat: 53.3, lng: -114.0 }, // SW corner
+      { lat: 53.9, lng: -113.1 }  // NE corner
+    );
+
     const autocomplete = new places.Autocomplete(inputRef.current, {
       types: ["address"],
       fields: ["formatted_address"],
+      bounds: edmontonBounds,
+      strictBounds: true,
     });
 
     const listener = autocomplete.addListener("place_changed", () => {

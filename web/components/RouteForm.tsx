@@ -36,18 +36,22 @@ export default function RouteForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-      <h2 className="font-semibold text-gray-800">Generate Route</h2>
-
-      <p className="text-sm text-gray-500">
-        {selectedCount} ticket{selectedCount !== 1 ? "s" : ""} selected
-      </p>
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-3 flex flex-col gap-2 w-72"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-700">Route Planner</span>
+        <span className="text-xs text-gray-400">
+          {selectedCount} stop{selectedCount !== 1 ? "s" : ""} selected
+        </span>
+      </div>
 
       <AddressAutocomplete
         placeholder="Start address"
         value={startAddress}
         onChange={setStartAddress}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         required
       />
 
@@ -55,20 +59,19 @@ export default function RouteForm({
         placeholder="End address"
         value={endAddress}
         onChange={setEndAddress}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         required
       />
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
 
       <button
         type="submit"
         disabled={loading || selectedCount === 0}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
         {loading ? "Generating…" : "Generate Route"}
       </button>
-
     </form>
   );
 }
