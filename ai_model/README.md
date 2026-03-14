@@ -3,7 +3,7 @@
 Welcome!
 This is our AI computer vision model for detection of Longitudinal Cracks, Transverse Cracks, Aligator Cracks, and Potholes based off of Ultralytics YOLOv26n.
 
-### To test our model:
+## To test our model:
 Make sure to run:
 
 ```
@@ -28,6 +28,14 @@ imgsz=640
 Cloud-Trained on GPU: H200 SXM rented through https://platform.ultralytics.com/
 
 
+For training, we combined two datasets:
+https://github.com/sekilab/RoadDamageDetector?tab=readme-ov-file (part for United States),
+and
+https://www.kaggle.com/datasets/anggadwisunarto/potholes-detection-yolov8
 
 
-### Feel free to take some pictures of potholes and cracks on the roads and test our network! enjoy :)
+For testing we used: https://www.kaggle.com/datasets/andrewmvd/pothole-detection
+
+
+
+### Feel free to take some pictures of potholes and cracks in your neighbourhood and test our network! enjoy :)
