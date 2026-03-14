@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -39,6 +39,17 @@ export default function TicketDetailPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const [leftColHeight, setLeftColHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!leftColRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setLeftColHeight(entry.contentRect.height);
+    });
+    observer.observe(leftColRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // ── Fetch ticket ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -134,154 +145,178 @@ export default function TicketDetailPage() {
         </h1>
       </header>
 
-      <div className="max-w-2xl mx-auto p-4 space-y-4">
+      <div className="max-w-7xl mx-auto p-4 space-y-4">
+
         {/* Map */}
-        <div className="w-full h-64 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+        <div className="flex gap-4 h-96 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
           <MapWidget
-            markers={[{
-              lat: ticket.latitude,
-              lng: ticket.longitude,
-              id: ticket.id,
-              severity: ticket.severity,
-            }]}
+            markers={[{ lat: ticket.latitude, lng: ticket.longitude, id: ticket.id, severity: ticket.severity }]}
             center={{ lat: ticket.latitude, lng: ticket.longitude }}
             zoom={16}
           />
         </div>
 
-        {/* Issue image */}
-        {ticket.image_url && (
-          <div className="rounded-xl overflow-hidden border border-gray-200">
-            <Image
-              src={getImageUrl(ticket.image_url)}
-              alt="Road issue"
-              width={800}
-              height={400}
-              className="w-full object-cover"
-            />
-          </div>
-        )}
+        {/* Bottom row: left column (info + completion) | right (image) */}
+        <div className="flex gap-4 items-stretch">
 
-        {/* Ticket info */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
-          <h2 className="font-semibold text-gray-800">Ticket Information</h2>
-          <InfoRow label="ID" value={ticket.id} mono />
-          <InfoRow label="Type" value={ticket.type} capitalize />
-          <InfoRow
-            label="Severity"
-            value={
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${SEVERITY_COLOR[ticket.severity]}`}>
-                {ticket.severity}
-              </span>
-            }
-          />
-          <InfoRow label="Status" value={ticket.status} capitalize />
-          {ticket.confidence != null && (
-            <InfoRow
-              label="Confidence"
-              value={`${(ticket.confidence * 100).toFixed(1)}%`}
-            />
-          )}
-          <InfoRow
-            label="Location"
-            value={`${ticket.latitude.toFixed(6)}, ${ticket.longitude.toFixed(6)}`}
-            mono
-          />
-          {ticket.description && (
-            <InfoRow label="Description" value={ticket.description} />
-          )}
-          <InfoRow
-            label="Created"
-            value={new Date(ticket.created_at).toLocaleString()}
-          />
-          {isAlreadyComplete && ticket.employee_id && (
-            <InfoRow label="Completed by" value={ticket.employee_id} />
-          )}
-        </div>
+          {/* Left column: info widget + completion form/status */}
+          <div ref={leftColRef} className="w-96 shrink-0 flex flex-col gap-4">
 
-        {/* Completion proof image */}
-        {isAlreadyComplete && ticket.completion_image_url && (
-          <div className="rounded-xl overflow-hidden border border-gray-200">
-            <p className="text-sm font-medium text-gray-600 px-4 pt-3 pb-1">Completion proof</p>
-            <Image
-              src={ticket.completion_image_url}
-              alt="Completion proof"
-              width={800}
-              height={400}
-              className="w-full object-cover"
-            />
-          </div>
-        )}
-
-        {/* Completion form */}
-        {submitSuccess ? (
-          <div className="rounded-xl bg-green-50 border border-green-200 p-4 text-center">
-            <p className="text-green-700 font-medium">Ticket marked as completed!</p>
-            <button onClick={() => router.push("/")} className="mt-2 text-sm text-blue-600 underline">
-              Back to map
-            </button>
-          </div>
-        ) : !isAlreadyComplete ? (
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white rounded-xl border border-gray-200 p-4 space-y-3"
-          >
-            <h2 className="font-semibold text-gray-800">Complete Ticket</h2>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={completed}
-                onChange={(e) => setCompleted(e.target.checked)}
-                className="h-4 w-4 accent-blue-600"
+            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+              <h2 className="font-semibold text-gray-800">Ticket Information</h2>
+              <InfoRow label="ID" value={ticket.id} mono />
+              <InfoRow label="Type" value={ticket.type} capitalize />
+              <InfoRow
+                label="Severity"
+                value={
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${SEVERITY_COLOR[ticket.severity]}`}>
+                    {ticket.severity}
+                  </span>
+                }
               />
-              <span className="text-sm text-gray-700">Mark as completed</span>
-            </label>
-
-            <input
-              type="text"
-              placeholder="Employee ID"
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">
-                Upload completion photo
-              </label>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-                className="text-sm text-gray-600"
-              />
-              {imageFile && (
-                <p className="text-xs text-gray-400 mt-1">{imageFile.name}</p>
+              <InfoRow label="Status" value={ticket.status} capitalize />
+              {ticket.confidence != null && (
+                <InfoRow label="Confidence" value={`${(ticket.confidence * 100).toFixed(1)}%`} />
+              )}
+              <InfoRow label="Location" value={`${ticket.latitude.toFixed(6)}, ${ticket.longitude.toFixed(6)}`} mono />
+              {ticket.description && <InfoRow label="Description" value={ticket.description} />}
+              <InfoRow label="Created" value={new Date(ticket.created_at).toLocaleString()} />
+              {isAlreadyComplete && ticket.employee_id && (
+                <InfoRow label="Completed by" value={ticket.employee_id} />
               )}
             </div>
 
-            {submitError && (
-              <p className="text-sm text-red-600">{submitError}</p>
+            {/* Completion form (new tickets only) */}
+            {!isAlreadyComplete && (
+              submitSuccess ? (
+                <div className="rounded-xl bg-green-50 border border-green-200 p-4 text-center">
+                  <p className="text-green-700 font-medium">Ticket marked as completed!</p>
+                  <button onClick={() => router.push("/")} className="mt-2 text-sm text-blue-600 underline">Back to map</button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+                  <h2 className="font-semibold text-gray-800">Complete Ticket</h2>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} className="h-4 w-4 accent-blue-600" />
+                    <span className="text-sm text-gray-700">Mark as completed</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Employee ID"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Upload completion photo</label>
+                    <input ref={fileRef} type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} className="text-sm text-gray-600" />
+                    {imageFile && <p className="text-xs text-gray-400 mt-1">{imageFile.name}</p>}
+                  </div>
+                  {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+                  <button type="submit" disabled={submitting} className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
+                    {submitting ? "Submitting…" : "Submit Completion"}
+                  </button>
+                </form>
+              )
             )}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              {submitting ? "Submitting…" : "Submit Completion"}
-            </button>
-          </form>
-        ) : (
-          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-center text-sm text-gray-500">
-            This ticket has already been completed.
           </div>
-        )}
+
+          {/* Right: image viewer — height locked to left column */}
+          <div className="flex-1 h-[565px]" style={leftColHeight ? { height: leftColHeight } : undefined}>
+            {isAlreadyComplete ? (
+              <div className="h-full flex flex-col">
+                <ImageViewer
+                  beforeUrl={ticket.image_url ? getImageUrl(ticket.image_url) : null}
+                  afterUrl={ticket.completion_image_url ?? null}
+                />
+              </div>
+            ) : (
+              <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                <div className="flex border-b border-gray-200">
+                  <span className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-500">Issue Image</span>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  {ticket.image_url ? (
+                    <Image src={getImageUrl(ticket.image_url)} alt="Issue" width={900} height={600} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-sm text-gray-400">No image</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+
       </div>
     </main>
     </APIProvider>
+  );
+}
+
+// ── Image viewer with Before / After / Compare tabs ──────────────────────────
+
+function ImageViewer({ beforeUrl, afterUrl }: { beforeUrl: string | null; afterUrl: string | null }) {
+  const tabs = useMemo(() => {
+    const t: string[] = [];
+    if (beforeUrl) t.push("Before");
+    if (afterUrl) t.push("After");
+    if (beforeUrl && afterUrl) t.push("Compare");
+    return t;
+  }, [beforeUrl, afterUrl]);
+
+  const [activeTab, setActiveTab] = useState(tabs[0] ?? "Before");
+
+  if (tabs.length === 0) {
+    return (
+      <div className="flex-1 rounded-xl border border-dashed border-gray-200 h-64 flex items-center justify-center text-sm text-gray-400">
+        No images
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+      {/* Tab bar */}
+      <div className="flex border-b border-gray-200">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === tab
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Image area */}
+      <div className="relative flex-1 overflow-hidden">
+        {activeTab === "Before" && beforeUrl && (
+          <Image src={beforeUrl} alt="Before" width={900} height={500} className="w-full h-full object-cover" />
+        )}
+        {activeTab === "After" && afterUrl && (
+          <Image src={afterUrl} alt="After" width={900} height={500} className="w-full h-full object-cover" />
+        )}
+        {activeTab === "Compare" && beforeUrl && afterUrl && (
+          <div className="flex gap-0.5 h-full">
+            <div className="flex-1 relative">
+              <span className="absolute top-2 left-2 z-10 bg-black/50 text-white text-xs px-2 py-0.5 rounded">Before</span>
+              <Image src={beforeUrl} alt="Before" width={450} height={400} className="w-full h-full object-cover" />
+            </div>
+            <div className="flex-1 relative">
+              <span className="absolute top-2 left-2 z-10 bg-black/50 text-white text-xs px-2 py-0.5 rounded">After</span>
+              <Image src={afterUrl} alt="After" width={450} height={400} className="w-full h-full object-cover" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
