@@ -39,6 +39,9 @@ function HomeContent() {
   const [filterType, setFilterType] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<Set<string>>(new Set());
   const [filterSeverity, setFilterSeverity] = useState<Set<string>>(new Set());
+  const [startAddress, setStartAddress] = useState("");
+  const [endAddress, setEndAddress] = useState("");
+  const [pickingFor, setPickingFor] = useState<"start" | "end" | null>(null);
 
   const routesLib = useMapsLibrary("routes");
 
@@ -59,6 +62,15 @@ function HomeContent() {
       return next;
     });
   }, []);
+
+  // ── Map location pick ─────────────────────────────────────────────────────
+  function handleMapClick(lat: number, lng: number) {
+    if (!pickingFor) return;
+    const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    if (pickingFor === "start") setStartAddress(coords);
+    else setEndAddress(coords);
+    setPickingFor(null);
+  }
 
   // ── Route generation ──────────────────────────────────────────────────────
   async function handleGenerateRoute(input: GenerateRouteInput) {
@@ -172,7 +184,13 @@ function HomeContent() {
         <div className={`flex h-96 ${plannerOpen ? "gap-4" : ""}`}>
           {/* Map */}
           <div className="relative flex-1 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-            <MapWidget markers={markers} onMarkerClick={toggleSelect} directionsResult={directionsResult} />
+            <MapWidget
+              markers={markers}
+              onMarkerClick={pickingFor ? undefined : toggleSelect}
+              directionsResult={directionsResult}
+              onMapClick={handleMapClick}
+              pickMode={!!pickingFor}
+            />
 
             {/* Route planner toggle — bottom-left, styled like a Google Maps control */}
             <button
@@ -197,6 +215,13 @@ function HomeContent() {
                 onGenerate={handleGenerateRoute}
                 mapsUrl={mapsUrl}
                 onClearRoute={directionsResult ? () => { setDirectionsResult(null); setMapsUrl(null); } : undefined}
+                startAddress={startAddress}
+                endAddress={endAddress}
+                onStartChange={setStartAddress}
+                onEndChange={setEndAddress}
+                pickingFor={pickingFor}
+                onPickStart={() => setPickingFor(p => p === "start" ? null : "start")}
+                onPickEnd={() => setPickingFor(p => p === "end" ? null : "end")}
               />
             </div>
           </div>

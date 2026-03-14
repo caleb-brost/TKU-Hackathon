@@ -28,6 +28,8 @@ interface MapWidgetProps {
   zoom?: number;
   onMarkerClick?: (id: string) => void;
   directionsResult?: google.maps.DirectionsResult | null;
+  onMapClick?: (lat: number, lng: number) => void;
+  pickMode?: boolean;
 }
 
 const SEVERITY_COLOR: Record<string, string> = {
@@ -84,16 +86,21 @@ export default function MapWidget({
   zoom = 13,
   onMarkerClick,
   directionsResult,
+  onMapClick,
+  pickMode,
 }: MapWidgetProps) {
   const defaultCenter = center ?? EDMONTON;
 
   return (
     <Map
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: "100%", height: "100%", cursor: pickMode ? "crosshair" : undefined }}
       defaultCenter={defaultCenter}
       defaultZoom={zoom}
       mapId="road-damage-map"
       disableDefaultUI={false}
+      onClick={pickMode && onMapClick ? (e) => {
+        if (e.detail.latLng) onMapClick(e.detail.latLng.lat, e.detail.latLng.lng);
+      } : undefined}
     >
       {directionsResult ? (
         <RouteRenderer result={directionsResult} />
