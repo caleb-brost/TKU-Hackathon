@@ -7,11 +7,15 @@ import AddressAutocomplete from "@/components/AddressAutocomplete";
 interface RouteFormProps {
   selectedCount: number;
   onGenerate: (input: GenerateRouteInput) => Promise<void>;
+  mapsUrl?: string | null;
+  onClearRoute?: () => void;
 }
 
 export default function RouteForm({
   selectedCount,
   onGenerate,
+  mapsUrl,
+  onClearRoute,
 }: RouteFormProps) {
   const [startAddress, setStartAddress] = useState("");
   const [endAddress, setEndAddress] = useState("");
@@ -24,7 +28,7 @@ export default function RouteForm({
     setLoading(true);
     try {
       await onGenerate({
-        selected_ticket_ids: [], // filled by parent
+        selected_ticket_ids: [],
         start_address: startAddress,
         end_address: endAddress,
       });
@@ -38,7 +42,7 @@ export default function RouteForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-3 flex flex-col gap-2 w-72"
+      className="h-full bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-col gap-2"
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-gray-700">Route Planner</span>
@@ -72,6 +76,27 @@ export default function RouteForm({
       >
         {loading ? "Generating…" : "Generate Route"}
       </button>
+
+      {mapsUrl && (
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 transition-colors text-center"
+        >
+          Open in Google Maps ↗
+        </a>
+      )}
+
+      {onClearRoute && (
+        <button
+          type="button"
+          onClick={onClearRoute}
+          className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          Clear route
+        </button>
+      )}
     </form>
   );
 }

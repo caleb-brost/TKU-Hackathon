@@ -34,6 +34,8 @@ function HomeContent() {
   const [sortCol, setSortCol] = useState<string>("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [directionsResult, setDirectionsResult] = useState<google.maps.DirectionsResult | null>(null);
+  const [mapsUrl, setMapsUrl] = useState<string | null>(null);
+  const [plannerOpen, setPlannerOpen] = useState(false);
   const [filterType, setFilterType] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<Set<string>>(new Set());
   const [filterSeverity, setFilterSeverity] = useState<Set<string>>(new Set());
@@ -77,6 +79,16 @@ function HomeContent() {
     });
 
     setDirectionsResult(result);
+
+    // Build Google Maps navigation URL using the optimized waypoint order
+    const order: number[] = result.routes[0]?.waypoint_order ?? selectedTickets.map((_, i) => i);
+    const orderedTickets = order.map((i) => selectedTickets[i]);
+    const parts = [
+      encodeURIComponent(input.start_address),
+      ...orderedTickets.map((t) => `${t.latitude},${t.longitude}`),
+      encodeURIComponent(input.end_address),
+    ];
+    setMapsUrl("https://www.google.com/maps/dir/" + parts.join("/"));
 
     // Persist to DB in the background
     fetch("/api/routes/generate", {
@@ -143,24 +155,38 @@ function HomeContent() {
       </header>
 
       <div className="max-w-7xl mx-auto p-4 space-y-4">
-        {/* Map */}
-        <div className="relative w-full h-96 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-          <MapWidget markers={markers} onMarkerClick={toggleSelect} directionsResult={directionsResult} />
+        {/* Map + Route Planner row */}
+        <div className="flex gap-4 h-96">
+          {/* Map */}
+          <div className="relative flex-1 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+            <MapWidget markers={markers} onMarkerClick={toggleSelect} directionsResult={directionsResult} />
 
-          {/* Route planner overlay — bottom-left */}
-          <div className="absolute bottom-3 left-3 z-10">
-            <RouteForm selectedCount={selected.size} onGenerate={handleGenerateRoute} />
+            {/* Route planner toggle — bottom-left, styled like a Google Maps control */}
+            <button
+              onClick={() => setPlannerOpen((o) => !o)}
+              className="absolute bottom-3 left-3 z-10 flex items-center gap-2 bg-white px-3 py-2 rounded shadow-[0_1px_4px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.3)] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all select-none"
+            >
+              <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              Route Planner
+            </button>
           </div>
 
-          {/* Clear route button — top-right */}
-          {directionsResult && (
-            <button
-              onClick={() => setDirectionsResult(null)}
-              className="absolute top-2 right-2 z-10 bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm"
-            >
-              Clear route
-            </button>
-          )}
+          {/* Route Planner panel */}
+          <div
+            className="shrink-0 overflow-hidden transition-all duration-300 ease-in-out"
+            style={{ width: plannerOpen ? "224px" : "0px" }}
+          >
+            <div className="w-56 h-full">
+              <RouteForm
+                selectedCount={selected.size}
+                onGenerate={handleGenerateRoute}
+                mapsUrl={mapsUrl}
+                onClearRoute={directionsResult ? () => { setDirectionsResult(null); setMapsUrl(null); } : undefined}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
