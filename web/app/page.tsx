@@ -102,12 +102,15 @@ function HomeContent() {
   }
 
   // ── Sorting ───────────────────────────────────────────────────────────────
+  // Columns that should default to descending on first click
+  const defaultDescCols = new Set(["severity", "created_at", "confidence"]);
+
   function handleSort(col: string) {
     if (col === sortCol) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortCol(col);
-      setSortDir("asc");
+      setSortDir(defaultDescCols.has(col) ? "desc" : "asc");
     }
   }
 
@@ -126,10 +129,18 @@ function HomeContent() {
     });
   }, [tickets, filterType, filterStatus, filterSeverity]);
 
+  const SEVERITY_RANK: Record<string, number> = { low: 0, medium: 1, high: 2 };
+
   const sortedTickets = useMemo(() => {
     return [...filteredTickets].sort((a, b) => {
-      const aVal = (a as Record<string, unknown>)[sortCol];
-      const bVal = (b as Record<string, unknown>)[sortCol];
+      let aVal: unknown = (a as Record<string, unknown>)[sortCol];
+      let bVal: unknown = (b as Record<string, unknown>)[sortCol];
+
+      if (sortCol === "severity") {
+        aVal = SEVERITY_RANK[a.severity] ?? 0;
+        bVal = SEVERITY_RANK[b.severity] ?? 0;
+      }
+
       if (aVal == null) return 1;
       if (bVal == null) return -1;
       const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
